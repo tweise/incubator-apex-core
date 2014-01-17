@@ -100,7 +100,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
       topicSet = socketToTopicMap.get(webSocket);
     }
     topicSet.add(topic);
-    publish(topic + ".numSubscribers", new Integer(getNumSubscribers(topic)));
+    publish(topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX, new Integer(getNumSubscribers(topic)));
   }
 
   private synchronized void unsubscribe(PubSubWebSocket webSocket, String topic)
@@ -121,7 +121,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
     if (topicSet.isEmpty()) {
       socketToTopicMap.remove(webSocket);
     }
-    publish(topic + ".numSubscribers", new Integer(getNumSubscribers(topic)));
+    publish(topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX, new Integer(getNumSubscribers(topic)));
   }
 
   private synchronized void unsubscribeAll(PubSubWebSocket webSocket)
@@ -134,7 +134,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
         if (wsSet.isEmpty()) {
           topicToSocketMap.remove(topic);
         }
-        publish(topic + ".numSubscribers", new Integer(getNumSubscribers(topic)));
+        publish(topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX, new Integer(getNumSubscribers(topic)));
       }
       socketToTopicMap.remove(webSocket);
     }
@@ -163,7 +163,9 @@ public class PubSubWebSocketServlet extends WebSocketServlet
 
   public synchronized void publish(String topic, Object data)
   {
-    latestTopics.put(topic, System.currentTimeMillis());
+    if (!topic.endsWith("." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX) && !topic.startsWith(PubSubMessage.INTERNAL_TOPIC_PREFIX + ".")) {
+      latestTopics.put(topic, System.currentTimeMillis());
+    }
     HashSet<PubSubWebSocket> wsSet = topicToSocketMap.get(topic);
     if (wsSet != null) {
       Iterator<PubSubWebSocket> it = wsSet.iterator();
@@ -222,13 +224,13 @@ public class PubSubWebSocketServlet extends WebSocketServlet
             }
             else if (type.equals(PubSubMessageType.SUBSCRIBE_NUM_SUBSCRIBERS)) {
               if (topic != null) {
-                subscribe(this, topic + ".numSubscribers");
-                sendData(this, topic + ".numSubscribers", new Integer(getNumSubscribers(topic)));
+                subscribe(this, topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX);
+                sendData(this, topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX, new Integer(getNumSubscribers(topic)));
               }
             }
             else if (type.equals(PubSubMessageType.UNSUBSCRIBE_NUM_SUBSCRIBERS)) {
               if (topic != null) {
-                unsubscribe(this, topic + ".numSubscribers");
+                unsubscribe(this, topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX);
               }
             }
             else if (type.equals(PubSubMessageType.GET_LATEST_TOPICS)) {
