@@ -39,6 +39,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   private static final int latestTopicCount = 100;
   private LRUCache<String, Long> latestTopics = new LRUCache<String, Long>(latestTopicCount, false)
   {
+    private static final long serialVersionUID = 20140131L;
     @Override
     public Long put(String key, Long value)
     {
