@@ -4,22 +4,25 @@
  */
 package com.datatorrent.gateway;
 
-import com.datatorrent.api.util.JacksonObjectMapperProvider;
-import com.datatorrent.api.util.PubSubMessage;
-import com.datatorrent.api.util.PubSubMessage.PubSubMessageType;
-import com.datatorrent.api.util.PubSubMessageCodec;
-import com.datatorrent.stram.util.LRUCache;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datatorrent.lib.util.JacksonObjectMapperProvider;
+import com.datatorrent.lib.util.PubSubMessage;
+import com.datatorrent.lib.util.PubSubMessage.PubSubMessageType;
+import com.datatorrent.lib.util.PubSubMessageCodec;
+
+import com.datatorrent.stram.util.LRUCache;
 
 /**
  * <p>PubSubWebSocketServlet class.</p>
