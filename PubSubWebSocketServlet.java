@@ -40,7 +40,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   private PubSubMessageCodec<Object> codec = new PubSubMessageCodec<Object>(mapper);
   private InternalMessageHandler internalMessageHandler = null;
   private static final int latestTopicCount = 100;
-  private LRUCache<String, Long> latestTopics = new LRUCache<String, Long>(latestTopicCount, false)
+  private final LRUCache<String, Long> latestTopics = new LRUCache<String, Long>(latestTopicCount, false)
   {
     private static final long serialVersionUID = 20140131L;
     @Override
@@ -104,7 +104,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
       topicSet = socketToTopicMap.get(webSocket);
     }
     topicSet.add(topic);
-    publish(topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX, new Integer(getNumSubscribers(topic)));
+    publish(topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX, getNumSubscribers(topic));
   }
 
   private synchronized void unsubscribe(PubSubWebSocket webSocket, String topic)
@@ -125,7 +125,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
     if (topicSet.isEmpty()) {
       socketToTopicMap.remove(webSocket);
     }
-    publish(topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX, new Integer(getNumSubscribers(topic)));
+    publish(topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX, getNumSubscribers(topic));
   }
 
   private synchronized void unsubscribeAll(PubSubWebSocket webSocket)
@@ -138,7 +138,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
         if (wsSet.isEmpty()) {
           topicToSocketMap.remove(topic);
         }
-        publish(topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX, new Integer(getNumSubscribers(topic)));
+        publish(topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX, getNumSubscribers(topic));
       }
       socketToTopicMap.remove(webSocket);
     }
@@ -189,8 +189,8 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   private class PubSubWebSocket implements WebSocket.OnTextMessage
   {
     private Connection connection;
-    private BlockingQueue<String> messageQueue = new ArrayBlockingQueue<String>(32);
-    private Thread messengerThread = new Thread(new Messenger());
+    private final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<String>(32);
+    private final Thread messengerThread = new Thread(new Messenger());
 
     @Override
     public void onMessage(String message)
@@ -229,7 +229,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
             else if (type.equals(PubSubMessageType.SUBSCRIBE_NUM_SUBSCRIBERS)) {
               if (topic != null) {
                 subscribe(this, topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX);
-                sendData(this, topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX, new Integer(getNumSubscribers(topic)));
+                sendData(this, topic + "." + PubSubMessage.NUM_SUBSCRIBERS_SUFFIX, getNumSubscribers(topic));
               }
             }
             else if (type.equals(PubSubMessageType.UNSUBSCRIBE_NUM_SUBSCRIBERS)) {
