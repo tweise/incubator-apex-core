@@ -79,7 +79,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   @Override
   protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
   {
-    if ("simple".equals(gateway.getWebAuthType())) {
+    if ("password".equals(gateway.getWebAuthType())) {
       Cookie[] cookies = request.getCookies();
       if (cookies != null) {
         for (Cookie cookie : cookies) {
