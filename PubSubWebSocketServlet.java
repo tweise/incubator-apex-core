@@ -4,6 +4,7 @@
  */
 package com.datatorrent.gateway;
 
+import com.datatorrent.gateway.security.AuthDatabase;
 import com.datatorrent.gateway.security.AuthenticationException;
 import java.io.IOException;
 import java.util.*;
@@ -79,13 +80,14 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   @Override
   protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
   {
-    if ("password".equals(gateway.getWebAuthType())) {
+    AuthDatabase auth = gateway.getAuthDatabase();
+    if (auth != null) {
       Cookie[] cookies = request.getCookies();
       if (cookies != null) {
         for (Cookie cookie : cookies) {
           if ("session".equals(cookie.getName())) {
             try {
-              gateway.getAuthDatabase().authenticateSession(cookie.getValue());
+              auth.authenticateSession(cookie.getValue());
             }
             catch (AuthenticationException ex) {
               throw new WebApplicationException(ex, Status.FORBIDDEN);
@@ -94,7 +96,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
           }
         }
       }
-      throw new WebApplicationException(Status.FORBIDDEN);
+      throw new WebApplicationException(Status.UNAUTHORIZED);
     }
     else {
       super.service(request, response);
