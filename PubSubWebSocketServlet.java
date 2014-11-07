@@ -50,7 +50,8 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   private static final int latestTopicCount = 100;
   private final DTGateway gateway;
   private static final String AUTH_ATTRIBUTE = "com.datatorrent.auth.principal";
-  private Filter subscribeFilter;
+  private SubscribeFilter subscribeFilter;
+  private SendFilter sendFilter;
   private final LRUCache<String, Long> latestTopics = new LRUCache<String, Long>(latestTopicCount, false)
   {
     private static final long serialVersionUID = 20140131L;
@@ -64,14 +65,24 @@ public class PubSubWebSocketServlet extends WebSocketServlet
 
   };
 
-  public interface Filter
+  public interface SubscribeFilter
   {
     boolean filter(DTGateway gateway, Principal principal, String topic);
   }
 
-  public void registerSubscribeFilter(Filter filter)
+  public interface SendFilter
+  {
+    Object filter(DTGateway gateway, Principal principal, String topic, Object data);
+  }
+
+  public void registerSubscribeFilter(SubscribeFilter filter)
   {
     subscribeFilter = filter;
+  }
+
+  public void registerSendFilter(SendFilter filter)
+  {
+    sendFilter = filter;
   }
 
   public interface InternalMessageHandler
@@ -222,7 +233,12 @@ public class PubSubWebSocketServlet extends WebSocketServlet
       while (it.hasNext()) {
         PubSubWebSocket socket = it.next();
         try {
-          sendData(socket, topic, data);
+          if (sendFilter != null) {
+            sendData(socket, topic, sendFilter.filter(gateway, socket.getPrincipal(), topic, data));
+          }
+          else {
+            sendData(socket, topic, data);
+          }
         }
         catch (Exception ex) {
           it.remove();
