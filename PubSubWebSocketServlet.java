@@ -25,6 +25,7 @@ import com.datatorrent.lib.util.PubSubMessage.PubSubMessageType;
 import com.datatorrent.lib.util.PubSubMessageCodec;
 
 import com.datatorrent.stram.util.LRUCache;
+import java.security.Principal;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -48,6 +49,8 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   private InternalMessageHandler internalMessageHandler = null;
   private static final int latestTopicCount = 100;
   private final DTGateway gateway;
+  private static final String AUTH_ATTRIBUTE = "com.datatorrent.auth.principal";
+  private Filter subscribeFilter;
   private final LRUCache<String, Long> latestTopics = new LRUCache<String, Long>(latestTopicCount, false)
   {
     private static final long serialVersionUID = 20140131L;
@@ -60,6 +63,16 @@ public class PubSubWebSocketServlet extends WebSocketServlet
     }
 
   };
+
+  public interface Filter
+  {
+    boolean filter(DTGateway gateway, Principal principal, String topic);
+  }
+
+  public void registerSubscribeFilter(Filter filter)
+  {
+    subscribeFilter = filter;
+  }
 
   public interface InternalMessageHandler
   {
@@ -87,7 +100,8 @@ public class PubSubWebSocketServlet extends WebSocketServlet
         for (Cookie cookie : cookies) {
           if ("session".equals(cookie.getName())) {
             try {
-              auth.authenticateSession(cookie.getValue());
+              Principal principal = auth.authenticateSession(cookie.getValue());
+              request.setAttribute(AUTH_ATTRIBUTE, principal);
             }
             catch (AuthenticationException ex) {
               throw new WebApplicationException(ex, Status.FORBIDDEN);
@@ -104,13 +118,19 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   }
 
   @Override
-  public WebSocket doWebSocketConnect(HttpServletRequest hsr, String protocol)
+  public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol)
   {
-    return new PubSubWebSocket();
+    Principal principal = (Principal)request.getAttribute(AUTH_ATTRIBUTE);
+    return new PubSubWebSocket(principal);
   }
 
   private synchronized void subscribe(PubSubWebSocket webSocket, String topic)
   {
+    if (subscribeFilter != null && !subscribeFilter.filter(gateway, webSocket.getPrincipal(), topic)) {
+      LOG.warn("Subscribe filter returns false. Ignoring subscribe request");
+      return;
+    }
+
     HashSet<PubSubWebSocket> wsSet;
     if (!topicToSocketMap.containsKey(topic)) {
       wsSet = new HashSet<PubSubWebSocket>();
@@ -217,6 +237,17 @@ public class PubSubWebSocketServlet extends WebSocketServlet
     private Connection connection;
     private final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<String>(32);
     private final Thread messengerThread = new Thread(new Messenger());
+    private final Principal principal;
+
+    public PubSubWebSocket(Principal principal)
+    {
+      this.principal = principal;
+    }
+
+    public Principal getPrincipal()
+    {
+      return principal;
+    }
 
     @Override
     public void onMessage(String message)
