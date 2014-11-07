@@ -67,11 +67,30 @@ public class PubSubWebSocketServlet extends WebSocketServlet
 
   public interface SubscribeFilter
   {
+
+    /**
+     * Returns whether or not the principal is allowed to subscribe to this topic
+     *
+     * @param gateway
+     * @param principal
+     * @param topic
+     * @return
+     */
     boolean filter(DTGateway gateway, Principal principal, String topic);
   }
 
   public interface SendFilter
   {
+
+    /**
+     * Returns the data it should be sent given the principal
+     *
+     * @param gateway
+     * @param principal
+     * @param topic
+     * @param data
+     * @return the data it should send to the websocket
+     */
     Object filter(DTGateway gateway, Principal principal, String topic, Object data);
   }
 
