@@ -13,6 +13,7 @@ import java.util.concurrent.BlockingQueue;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.datatorrent.gateway.security.DTPrincipal;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketServlet;
@@ -76,7 +77,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
      * @param topic
      * @return
      */
-    boolean filter(DTGateway gateway, Principal principal, String topic);
+    boolean filter(DTGateway gateway, DTPrincipal principal, String topic);
   }
 
   public interface SendFilter
@@ -91,7 +92,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
      * @param data
      * @return the data it should send to the websocket
      */
-    Object filter(DTGateway gateway, Principal principal, String topic, Object data);
+    Object filter(DTGateway gateway, DTPrincipal principal, String topic, Object data);
   }
 
   public void registerSubscribeFilter(SubscribeFilter filter)
@@ -123,14 +124,14 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   @Override
   protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
   {
-    AuthDatabase auth = gateway.getAuthDatabase();
-    if (auth != null) {
+    if (gateway.getWebAuthType() == DTGateway.WEB_AUTH_TYPE_PASSWORD) {
       Cookie[] cookies = request.getCookies();
       if (cookies != null) {
         for (Cookie cookie : cookies) {
           if ("session".equals(cookie.getName())) {
             try {
-              Principal principal = auth.authenticateSession(cookie.getValue());
+              AuthDatabase auth = gateway.getAuthDatabase();
+              DTPrincipal principal = auth.authenticateSession(cookie.getValue());
               request.setAttribute(AUTH_ATTRIBUTE, principal);
             }
             catch (AuthenticationException ex) {
@@ -150,7 +151,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   @Override
   public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol)
   {
-    Principal principal = (Principal)request.getAttribute(AUTH_ATTRIBUTE);
+    DTPrincipal principal = (DTPrincipal)request.getAttribute(AUTH_ATTRIBUTE);
     return new PubSubWebSocket(principal);
   }
 
@@ -272,14 +273,14 @@ public class PubSubWebSocketServlet extends WebSocketServlet
     private Connection connection;
     private final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<String>(32);
     private final Thread messengerThread = new Thread(new Messenger());
-    private final Principal principal;
+    private final DTPrincipal principal;
 
-    public PubSubWebSocket(Principal principal)
+    public PubSubWebSocket(DTPrincipal principal)
     {
       this.principal = principal;
     }
 
-    public Principal getPrincipal()
+    public DTPrincipal getPrincipal()
     {
       return principal;
     }
