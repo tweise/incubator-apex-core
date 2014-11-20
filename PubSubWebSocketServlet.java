@@ -4,34 +4,28 @@
  */
 package com.datatorrent.gateway;
 
-import com.datatorrent.gateway.security.AuthDatabase;
-import com.datatorrent.gateway.security.AuthenticationException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-import com.datatorrent.gateway.security.DTPrincipal;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datatorrent.gateway.security.DTPrincipal;
 import com.datatorrent.lib.util.JacksonObjectMapperProvider;
 import com.datatorrent.lib.util.PubSubMessage;
 import com.datatorrent.lib.util.PubSubMessage.PubSubMessageType;
 import com.datatorrent.lib.util.PubSubMessageCodec;
-
 import com.datatorrent.stram.util.LRUCache;
-import java.security.Principal;
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response.Status;
+
 
 /**
  * <p>PubSubWebSocketServlet class.</p>
@@ -124,7 +118,8 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   @Override
   protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
   {
-    if (DTGateway.WEB_AUTH_TYPE_PASSWORD.equals(gateway.getWebAuthType())) {
+    /* commenting this out to allow anonymous publish from stram
+     if (DTGateway.WEB_AUTH_TYPE_PASSWORD.equals(gateway.getWebAuthType())) {
       Cookie[] cookies = request.getCookies();
       if (cookies != null) {
         for (Cookie cookie : cookies) {
@@ -143,9 +138,8 @@ public class PubSubWebSocketServlet extends WebSocketServlet
       }
       throw new WebApplicationException(Status.UNAUTHORIZED);
     }
-    else {
-      super.service(request, response);
-    }
+     */
+    super.service(request, response);
   }
 
   @Override
