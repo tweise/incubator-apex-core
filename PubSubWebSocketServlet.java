@@ -265,6 +265,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
           }
         }
         catch (Exception ex) {
+          LOG.error("Cannot send message", ex);
           it.remove();
           disconnect(socket);
         }
