@@ -4,6 +4,8 @@
  */
 package com.datatorrent.gateway;
 
+import com.datatorrent.gateway.security.AuthDatabase;
+import com.datatorrent.gateway.security.AuthenticationException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -25,6 +27,7 @@ import com.datatorrent.lib.util.PubSubMessage;
 import com.datatorrent.lib.util.PubSubMessage.PubSubMessageType;
 import com.datatorrent.lib.util.PubSubMessageCodec;
 import com.datatorrent.stram.util.LRUCache;
+import javax.servlet.http.Cookie;
 
 
 /**
@@ -118,8 +121,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   @Override
   protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
   {
-    /* commenting this out to allow anonymous publish from stram
-     if (DTGateway.WEB_AUTH_TYPE_PASSWORD.equals(gateway.getWebAuthType())) {
+    if (DTGateway.WEB_AUTH_TYPE_PASSWORD.equals(gateway.getWebAuthType())) {
       Cookie[] cookies = request.getCookies();
       if (cookies != null) {
         for (Cookie cookie : cookies) {
@@ -130,15 +132,19 @@ public class PubSubWebSocketServlet extends WebSocketServlet
               request.setAttribute(AUTH_ATTRIBUTE, principal);
             }
             catch (AuthenticationException ex) {
-              throw new WebApplicationException(ex, Status.FORBIDDEN);
+              /* commenting this out to allow anonymous publish from stram
+               throw new WebApplicationException(ex, Status.FORBIDDEN);
+               */
             }
-            super.service(request, response);
+            //super.service(request, response);
           }
         }
       }
-      throw new WebApplicationException(Status.UNAUTHORIZED);
+      /* commenting this out to allow anonymous publish from stram
+       throw new WebApplicationException(Status.UNAUTHORIZED);
+       */
     }
-     */
+     
     super.service(request, response);
   }
 
@@ -152,8 +158,11 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   private synchronized void subscribe(PubSubWebSocket webSocket, String topic)
   {
     if (subscribeFilter != null && !subscribeFilter.filter(gateway, webSocket.getPrincipal(), topic)) {
-      LOG.warn("Subscribe filter returns false. Ignoring subscribe request");
+      LOG.warn("Subscribe filter returns false for topic {}, user {}. Ignoring subscribe request", topic, webSocket.getPrincipal());
       return;
+    }
+    else {
+      LOG.info("Subscribe is allowed for topic {}, user {}", topic, webSocket.getPrincipal());
     }
 
     HashSet<PubSubWebSocket> wsSet;
@@ -232,7 +241,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
     pubSubMessage.setType(PubSubMessageType.DATA);
     pubSubMessage.setTopic(topic);
     pubSubMessage.setData(data);
-    LOG.debug("Sending data of {} to subscriber...", topic);
+    LOG.debug("Sending data {} to subscriber...", topic);
     webSocket.sendMessage(codec.formatMessage(pubSubMessage));
   }
 
@@ -248,7 +257,8 @@ public class PubSubWebSocketServlet extends WebSocketServlet
         PubSubWebSocket socket = it.next();
         try {
           if (sendFilter != null) {
-            sendData(socket, topic, sendFilter.filter(gateway, socket.getPrincipal(), topic, data));
+            Object filteredData = sendFilter.filter(gateway, socket.getPrincipal(), topic, data);
+            sendData(socket, topic, filteredData);
           }
           else {
             sendData(socket, topic, data);
