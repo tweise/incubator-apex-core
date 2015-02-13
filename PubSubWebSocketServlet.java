@@ -25,7 +25,6 @@ import org.eclipse.jetty.websocket.WebSocketServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datatorrent.lib.util.JacksonObjectMapperProvider;
 import com.datatorrent.lib.util.PubSubMessage;
 import com.datatorrent.lib.util.PubSubMessage.PubSubMessageType;
 import com.datatorrent.lib.util.PubSubMessageCodec;
@@ -33,6 +32,7 @@ import com.datatorrent.lib.util.PubSubMessageCodec;
 import com.datatorrent.gateway.security.AuthDatabase;
 import com.datatorrent.gateway.security.AuthenticationException;
 import com.datatorrent.gateway.security.DTPrincipal;
+import com.datatorrent.stram.util.JSONSerializationProvider;
 import com.datatorrent.stram.util.LRUCache;
 
 
@@ -48,7 +48,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   private static final long serialVersionUID = 1L;
   private HashMap<String, HashSet<PubSubWebSocket>> topicToSocketMap = new HashMap<String, HashSet<PubSubWebSocket>>();
   private HashMap<PubSubWebSocket, HashSet<String>> socketToTopicMap = new HashMap<PubSubWebSocket, HashSet<String>>();
-  private ObjectMapper mapper = (new JacksonObjectMapperProvider()).getContext(null);
+  private ObjectMapper mapper = (new JSONSerializationProvider()).getContext(null);
   private PubSubMessageCodec<Object> codec = new PubSubMessageCodec<Object>(mapper);
   private InternalMessageHandler internalMessageHandler = null;
   private static final int latestTopicCount = 100;
