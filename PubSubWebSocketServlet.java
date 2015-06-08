@@ -25,9 +25,9 @@ import org.eclipse.jetty.websocket.WebSocketServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datatorrent.lib.util.PubSubMessage;
-import com.datatorrent.lib.util.PubSubMessage.PubSubMessageType;
-import com.datatorrent.lib.util.PubSubMessageCodec;
+import com.datatorrent.common.util.PubSubMessage;
+import com.datatorrent.common.util.PubSubMessage.PubSubMessageType;
+import com.datatorrent.common.util.PubSubMessageCodec;
 
 import com.datatorrent.gateway.security.AuthDatabase;
 import com.datatorrent.gateway.security.AuthenticationException;
