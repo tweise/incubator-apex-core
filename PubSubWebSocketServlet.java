@@ -308,7 +308,7 @@ public class PubSubWebSocketServlet extends WebSocketServlet
   private class PubSubWebSocket implements WebSocket.OnTextMessage
   {
     private Connection connection;
-    private final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<String>(32);
+    private final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<String>(1024);
     private final Thread messengerThread = new Thread(new Messenger());
     private final DTPrincipal principal;
 
@@ -385,8 +385,8 @@ public class PubSubWebSocketServlet extends WebSocketServlet
     {
       LOG.debug("onOpen");
       this.connection = connection;
-      this.connection.setMaxIdleTime(60 * 60 * 1000); // idle time set to one hour to clear out idle connections from taking resources
-      this.connection.setMaxTextMessageSize(1024 * 1024); // allow larger text message
+      this.connection.setMaxIdleTime(5 * 60 * 1000); // idle time set to five minute to clear out idle connections from taking resources
+      this.connection.setMaxTextMessageSize(8 * 1024 * 1024); // allow larger text message
       messengerThread.start();
     }
 
