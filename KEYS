@@ -1,0 +1,91 @@
+This file contains the GPG keys of Apache Apex developers.
+
+Users:    gpg --import KEYS
+
+Developers:
+  Create a key:
+    gpg --gen-key
+
+  Adding you key to this file:
+    (gpg --fingerprint <key id> && gpg --armor --export <key id>) >> this file.
+
+  Publish the key:
+    gpg --keyserver pgp.mit.edu --send-keys <key id>
+
+  Signing another developers key:
+    gpg --keyserver pgp.mit.edu --search-keys <name or email>
+    gpg --keyserver pgp.mit.edu --recv-keys <key id>
+    gpg --sign-key <key id>
+    gpg --keyserver pgp.mit.edu --send-keys <key id>
+
+  Additional Information:
+    http://www.apache.org/dev/openpgp.html#generate-key
+
+********************************* PLEASE NOTE **********************************
+
+  Releases will be signed using one of these keys in this file. This file will
+  be available with the distributed Apache Apex releases at:
+
+      https://dist.apache.org/repos/dist/release/incubator/apex/KEYS
+
+********************************************************************************
+
+
+
+
+pub   4096R/D920A98C 2015-09-16
+      Key fingerprint = 1040 9A66 C7C2 F297 C858  1C2A 12DE E3E4 D920 A98C
+uid                  Thomas Weise <thw@apache.org>
+sub   4096R/62CD4530 2015-09-16
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: GnuPG v2.0.14 (GNU/Linux)
+
+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
+=OCmi
+-----END PGP PUBLIC KEY BLOCK-----
