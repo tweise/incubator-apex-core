@@ -164,9 +164,7 @@ public interface DAG extends DAGContext, Serializable
   {
     String getName();
 
-    InputPortMeta getMeta(Operator.InputPort<?> port);
-
-    OutputPortMeta getMeta(Operator.OutputPort<?> port);
+    Module getModule();
   }
 
   /**
