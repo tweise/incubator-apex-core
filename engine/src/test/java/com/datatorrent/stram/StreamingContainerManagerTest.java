@@ -784,6 +784,9 @@ public class StreamingContainerManagerTest
       }
     }
 
+List<PTOperator> operators = o3p1.getContainer().getOperators();
+PTOperator unifier2 = o3p1.upstreamMerge.values().iterator().next();
+
     MockOperatorStats unifierp1mos = mc4.stats(unifier.getId());
     unifierp1mos.currentWindowId(1).checkpointWindowId(1).deployState(DeployState.ACTIVE);
 
