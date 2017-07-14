@@ -23,6 +23,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -53,6 +55,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.http.HttpConfig;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.security.Credentials;
@@ -618,7 +621,7 @@ public class StreamingAppMasterService extends CompositeService
 
     // start web service
     try {
-      org.mortbay.log.Log.setLog(null);
+      //org.mortbay.log.Log.setLog(null);
     } catch (Throwable throwable) {
       // SPOI-2687. As part of Pivotal Certification, we need to catch ClassNotFoundException as Pivotal was using
       // Jetty 7 where as other distros are using Jetty 6.
@@ -629,17 +632,39 @@ public class StreamingAppMasterService extends CompositeService
       Configuration config = getConfig();
       if (SecurityUtils.isStramWebSecurityEnabled()) {
         config = new Configuration(config);
-        config.set("hadoop.http.filter.initializers", StramWSFilterInitializer.class.getCanonicalName());
+        System.out.println("web security is enabled");
+        //config.set("hadoop.http.filter.initializers", StramWSFilterInitializer.class.getCanonicalName());
+      } else {
+        if (!"simple".equals(config.get(SecurityUtils.HADOOP_HTTP_AUTH_PROP))) {
+          LOG.warn("Found http authentication {} but authentication was disabled in Apex.",
+              config.get(SecurityUtils.HADOOP_HTTP_AUTH_PROP));
+          config = new Configuration(config);
+          // turn off authentication for Apex as specified by user
+          config.set(SecurityUtils.HADOOP_HTTP_AUTH_PROP, "simple");
+        }
+      }
+
+      // TW: hack to bypass SSL in tst since the certificate configured for YARN cannot be read
+      if (System.getProperty("skipssl") != null) {
+        config = new Configuration(config);
+        config.set("hadoop.ssl.enabled", "false");
+        config.set(YarnConfiguration.YARN_HTTP_POLICY_KEY, YarnConfiguration.YARN_HTTP_POLICY_DEFAULT);
+      }
+
+      Iterator it = config.iterator();
+      while (it.hasNext()) {
+        System.out.println(it.next());
       }
       WebApp webApp = WebApps.$for("stram", StramAppContext.class, appContext, "ws").with(config).start(new StramWebApp(this.dnmgr));
       LOG.info("Started web service at port: " + webApp.port());
-      appMasterTrackingUrl = NetUtils.getConnectAddress(webApp.getListenerAddress()).getHostName() + ":" + webApp.port();
+      appMasterTrackingUrl = NetUtils.getConnectAddress(webApp.getListenerAddress()).getAddress().getCanonicalHostName() + ":" + webApp.port();
 
       if (ConfigUtils.isSSLEnabled(config)) {
         appMasterTrackingUrl = "https://" + appMasterTrackingUrl;
       }
       LOG.info("Setting tracking URL to: " + appMasterTrackingUrl);
     } catch (Exception e) {
+      e.printStackTrace();
       LOG.error("Webapps failed to start. Ignoring for now:", e);
     }
   }
